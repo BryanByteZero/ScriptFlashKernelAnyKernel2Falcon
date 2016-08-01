@@ -3,7 +3,7 @@
 
 ## AnyKernel setup
 # EDIFY properties
-kernel.string=ZER0 by BryanByteZ at XDA-devs
+kernel.string=ZER0 Kernel by BryanByteZ at XDA-Devs
 do.devicecheck=0
 do.initd=1
 do.modules=0
