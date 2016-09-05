@@ -32,7 +32,7 @@ cd /tmp/anykernel;
 unzip -o "$ZIP";
 
 ui_print "$(file_getprop /tmp/anykernel/anykernel.sh kernel.string)";
-ui_print "ZER0 Kernel for MOTO G 2013 a.k.a. Falcon";
+ui_print "ZER0 Byte Kernel for MOTO G 2013 (a.k.a. Falcon)";
 /sbin/busybox mount /system;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
