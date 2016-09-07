@@ -1,0 +1,5 @@
+ # Intelli_thermal switch on
+    write /sys/module/msm_thermal_v2/parameters/enabled Y
+    
+ # Enable Dynamic Fsync
+    write /sys/kernel/dyn_fsync/Dyn_fsync_active 1

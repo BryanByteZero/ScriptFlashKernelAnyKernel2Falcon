@@ -1,81 +1,117 @@
 #!/sbin/sh
-# AnyKernel2 Backend
-# osm0sis @ xda-developers
 
-OUTFD=/proc/self/fd/$2;
+# -------------------------------------
+# * ZER0 Byte Kernel install script
+# * By BryanByteZ at XDA-Devs
+# * Based on AnyKernel 2 by osm0sis
+# * And AnyKernel2 scripts by @hurtsky and @Kamin4ri
+# -------------------------------------
+
+# Main variables
+OUTFD="/proc/self/fd/$2";
 ZIP="$3";
 DIR=`dirname "$ZIP"`;
 
-ui_print() {
-  until [ ! "$1" ]; do
-    echo -e "ui_print $1\nui_print" > $OUTFD;
-    shift;
-  done;
+# Methods
+abort() {
+	ui_print "$1";
+	exit 1;
 }
-show_progress() { echo "progress $1 $2" > $OUTFD; }
+
+file_getprop() { 
+	grep "^$2" "$1" | cut -d= -f2; 
+}
+
+getprop() { 
+	test -e /sbin/getprop && /sbin/getprop $1 || file_getprop /default.prop $1; 
+}
+
+set_perm() {
+	chown $1:$2 $4;
+	chmod $3 $4;
+}
+
 set_perm_recursive() {
-  dirs=$(echo $* | awk '{ print substr($0, index($0,$5)) }');
-  for i in $dirs; do
-    chown -R $1.$2 $i; chown -R $1:$2 $i;
-    find "$i" -type d -exec chmod $3 {} +;
-    find "$i" -type f -exec chmod $4 {} +;
-  done;
+	dirs=$(echo $* | awk '{ print substr($0, index($0,$5)) }');
+	for i in $dirs; do
+		chown -R $1.$2 $i; chown -R $1:$2 $i;
+		find "$i" -type d -exec chmod $3 {} +;
+		find "$i" -type f -exec chmod $4 {} +;
+	done;
 }
-file_getprop() { grep "^$2" "$1" | cut -d= -f2; }
-getprop() { test -e /sbin/getprop && /sbin/getprop $1 || file_getprop /default.prop $1; }
-abort() { ui_print "$*"; exit 1; }
 
-show_progress 1.34 4;
+set_progress() { 
+	echo "set_progress $1 $2" > "$OUTFD"; 
+}
+
+ui_print() {
+	echo "ui_print $1" > "$OUTFD";
+	echo "ui_print" > "$OUTFD";
+}
+
+# Let's begin
 ui_print " ";
-mkdir -p /tmp/anykernel;
-cd /tmp/anykernel;
-unzip -o "$ZIP";
+mkdir -p /tmp/kernel;
+cd /tmp/kernel;
+unzip -o $ZIP;
 
-ui_print "$(file_getprop /tmp/anykernel/anykernel.sh kernel.string)";
-ui_print "ZER0 Byte Kernel for MOTO G 2013 (a.k.a. Falcon)";
-/sbin/busybox mount /system;
+ui_print "***************************************************";
+ui_print "* ZER0 Byte Kernel (CyanogenMod Version)";
+ui_print "* By BryanByteZ at XDA-Devs";
+ui_print "* `cat /tmp/kernel/device.txt`";
+ui_print "* `cat /tmp/kernel/version.txt`";
+ui_print "* ";
+ui_print "***************************************************";
 
-if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
-  ui_print "Checking device...";
-  ui_print " ";
-  for i in 1 2 3 4 5; do
-    testname="$(file_getprop /tmp/anykernel/anykernel.sh device.name$i)";
-    if [ "$(getprop ro.product.device)" == "$testname" -o "$(getprop ro.build.product)" == "$testname" ]; then
-      match=1;
-    fi;
-  done;
-  if [ "$match" != 1 ]; then
-    umount /system;
-    abort "Unsupported device. Aborting...";
-  fi;
-fi;
-
-if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.initd)" == 1 ]; then
-  ui_print "Creating init.d...";
-  ui_print " ";
-  mkdir /system/etc/init.d;
-  set_perm_recursive 0 0 0755 0755 /system/etc/init.d;
-fi;
-
-ui_print "Installing kernel...";
-/sbin/sh /tmp/anykernel/anykernel.sh $2;
-if [ $? != "0" ]; then
-  umount /system;
-  abort;
-fi;
-
-if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.modules)" == 1 ]; then
-  ui_print "Pushing modules...";
-  ui_print " ";
-  cp -f /tmp/anykernel/modules/* /system/lib/modules/;
-  set_perm_recursive 0 0 0755 0644 /system/lib/modules;
-fi;
-
-if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.cleanup)" == 1 ]; then
-  rm -rf /tmp/anykernel;
-fi;
-
-umount /system;
+# Mount /system
+set_progress 0.134;
 ui_print " ";
-ui_print "Done!";
+ui_print "* Mounting system partition...";
+busybox mount /system;
+
+# Flash the kernel (zImage + dt.img)
+set_progress 0.67 5;
+ui_print " ";
+ui_print "* Installing the kernel...";
+/sbin/sh /tmp/kernel/anykernel.sh;
+if [[ `cat /tmp/kernel/exitcode` = "1" ]]; then 
+	ui_print "* Couldn't install the kernel. Unmounting system and aborting installation.";
+	ui_print "* Check /tmp/recovery.log for details.";
+	umount /system;
+	abort;
+else
+	ui_print "* Kernel successfully installed.";
+fi;
+
+# Delete old stuff
+
+# Push new stuff
+
+# Disable powerHal and mpdecision if enabled
+# thanks to alberto & fabio for finding out the true location of powerhal
+# adapt the idea of blechdose and modified by hurtsky for anykernel script usage and ported to my script
+
+if [ -e /system/vendor/lib/hw/power.msm8226.so ]; then
+	[ -e /system/vendor/lib/hw/power.msm8226.so.bak ] || cp /system/vendor/lib/hw/power.msm8226.so /system/vendor/lib/hw/power.msm8226.so.bak;
+	[ -e /system/vendor/lib/hw/power.msm8226.so ] && rm -f /system/vendor/lib/hw/power.msm8226.so;
+fi;
+
+# add another location (CM latest powerhal)
+if [ -e /system/lib/hw/power.msm8226.so ]; then
+	[ -e /system/lib/hw/power.msm8226.so.bak ] || cp /system/lib/hw/power.msm8226.so /system/lib/hw/power.msm8226.so.bak;
+	[ -e /system/lib/hw/power.msm8226.so ] && rm -f /system/lib/hw/power.msm8226.so;
+fi;
+
+if [ -e /system/bin/mpdecision ]; then
+	[ -e /system/bin/mpdecisionbak ] || cp /system/bin/mpdecision /system/bin/mpdecisionbak;
+	[ -e /system/bin/mpdecision ] && rm -f /system/bin/mpdecision;
+fi;
+
+# Clean up & finish
+busybox umount /system;
+cd /tmp;
+rm -rf kernel/;
+ui_print " ";
+ui_print "* Done!";
+
 
