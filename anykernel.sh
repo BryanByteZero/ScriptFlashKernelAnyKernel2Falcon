@@ -78,18 +78,14 @@ write_boot() {
     secondoff=`cat *-secondoff`;
     secondoff="--second_offset $secondoff";
   fi;
-  if [ -f /tmp/anykernel/zImage ]; then
-    kernel=/tmp/anykernel/zImage;
-  else
-    kernel=`ls *-zImage`;
-    kernel=$split_img/$kernel;
+  #Falcon requires a zImage with the device tree(s) appended, so let's use it
+  if [ -f /tmp/anykernel/zImage-dtb ]; then
+        kernel=/tmp/anykernel/zImage-dtb; 
+    else
+        kernel=`ls *-zImage-dtb`;
+        kernel=$split_img/$kernel;
   fi;
-  if [ -f /tmp/anykernel/dtb ]; then
-    dtb="--dt /tmp/anykernel/dtb";
-  elif [ -f *-dtb ]; then
-    dtb=`ls *-dtb`;
-    dtb="--dt $split_img/$dtb";
-  fi;
+  #Okay
   cd $ramdisk;
   find . | cpio -H newc -o | gzip > /tmp/anykernel/ramdisk-new.cpio.gz;
   if [ $? != 0 ]; then
@@ -222,6 +218,27 @@ chmod -R 755 $ramdisk
 dump_boot;
 
 # begin ramdisk changes
+
+
+# disable powerHal and mpdecision if enabled
+# thanks to alberto & fabio for finding out the true location of powerhal
+# adapt the idea of blechdose and modified by hurtsky for anykernel script usage
+
+if [ -e /system/vendor/lib/hw/power.msm8226.so ]; then
+	[ -e /system/vendor/lib/hw/power.msm8226.so.bak ] || cp /system/vendor/lib/hw/power.msm8226.so /system/vendor/lib/hw/power.msm8226.so.bak;
+	[ -e /system/vendor/lib/hw/power.msm8226.so ] && rm -f /system/vendor/lib/hw/power.msm8226.so;
+fi;
+
+# add another location (CM latest powerhal)
+if [ -e /system/lib/hw/power.msm8226.so ]; then
+	[ -e /system/lib/hw/power.msm8226.so.bak ] || cp /system/lib/hw/power.msm8226.so /system/lib/hw/power.msm8226.so.bak;
+	[ -e /system/lib/hw/power.msm8226.so ] && rm -f /system/lib/hw/power.msm8226.so;
+fi;
+
+if [ -e /system/bin/mpdecision ]; then
+	[ -e /system/bin/mpdecisionbak ] || cp /system/bin/mpdecision /system/bin/mpdecisionbak;
+	[ -e /system/bin/mpdecision ] && rm -f /system/bin/mpdecision;
+fi;
 
 # end ramdisk changes
 

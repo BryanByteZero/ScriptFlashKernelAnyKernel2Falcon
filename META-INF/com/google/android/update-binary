@@ -44,7 +44,7 @@ ui_print "$(file_getprop /tmp/anykernel/anykernel.sh kernel.string)";
 ui_print " ";
 ui_print "AnyKernel2 by osm0sis @ xda-developers";
 ui_print " ";
-mount -o ro /system;
+mount -o rw /system;
 mount /data;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
@@ -60,26 +60,6 @@ if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
   if [ "$match" != 1 ]; then
     abort "Unsupported device. Aborting...";
   fi;
-fi;
-
-# disable powerHal and mpdecision if enabled
-# thanks to alberto & fabio for finding out the true location of powerhal
-# adapt the idea of blechdose and modified by hurtsky for anykernel script usage
-
-if [ -e /system/vendor/lib/hw/power.msm8226.so ]; then
-	[ -e /system/vendor/lib/hw/power.msm8226.so.bak ] || cp /system/vendor/lib/hw/power.msm8226.so /system/vendor/lib/hw/power.msm8226.so.bak;
-	[ -e /system/vendor/lib/hw/power.msm8226.so ] && rm -f /system/vendor/lib/hw/power.msm8226.so;
-fi;
-
-# add another location (CM latest powerhal)
-if [ -e /system/lib/hw/power.msm8226.so ]; then
-	[ -e /system/lib/hw/power.msm8226.so.bak ] || cp /system/lib/hw/power.msm8226.so /system/lib/hw/power.msm8226.so.bak;
-	[ -e /system/lib/hw/power.msm8226.so ] && rm -f /system/lib/hw/power.msm8226.so;
-fi;
-
-if [ -e /system/bin/mpdecision ]; then
-	[ -e /system/bin/mpdecisionbak ] || cp /system/bin/mpdecision /system/bin/mpdecisionbak;
-	[ -e /system/bin/mpdecision ] && rm -f /system/bin/mpdecision;
 fi;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.initd)" == 1 ]; then
