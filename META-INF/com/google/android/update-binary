@@ -27,7 +27,7 @@ set_perm_recursive() {
 }
 file_getprop() { grep "^$2" "$1" | cut -d= -f2; }
 getprop() { test -e /sbin/getprop && /sbin/getprop $1 || file_getprop /default.prop $1; }
-abort() { ui_print "$*"; umount /system; umount /data; exit 1; }
+abort() { ui_print "$*"; busybox umount /system; busybox umount /data; exit 1; }
 
 show_progress 1.34 4;
 ui_print " ";
@@ -42,10 +42,11 @@ bb=/tmp/anykernel/tools/busybox;
 
 ui_print "$(file_getprop /tmp/anykernel/anykernel.sh kernel.string)";
 ui_print " ";
-ui_print "AnyKernel2 by osm0sis @ xda-developers";
+ui_print "AnyKernel2 script by osm0sis and modified by BryanByteZero at XDA Developers";
 ui_print " ";
-mount -o rw /system;
-mount /data;
+busybox mount /system;
+#mount -o r0 /system;
+#mount /data;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
   ui_print "Checking device...";
@@ -63,12 +64,12 @@ if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
 fi;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.initd)" == 1 ]; then
-  ui_print "Creating init.d...";
-  ui_print " ";
-  mount -o remount,rw /system;
+#  ui_print "Creating init.d...";
+#  ui_print " ";
+busybox mount -o remount,rw /system;
   mkdir /system/etc/init.d;
   set_perm_recursive 0 0 0755 0755 /system/etc/init.d;
-  mount -o remount,ro /system;
+busybox mount -o remount,ro /system;
 fi;
 
 ui_print "Installing kernel...";
@@ -84,19 +85,19 @@ if [ $? != "0" ]; then
 fi;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.modules)" == 1 ]; then
-  ui_print " ";
-  ui_print "Pushing modules...";
-  mount -o remount,rw /system;
+  #ui_print " ";
+  #ui_print "Pushing modules...";
+busybox mount -o remount,rw /system;
   cp -rf /tmp/anykernel/modules/* /system/lib/modules/;
   set_perm_recursive 0 0 0755 0644 /system/lib/modules;
-  mount -o remount,ro /system;
+busybox mount -o remount,ro /system;
 fi;
 
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.cleanup)" == 1 ]; then
   rm -rf /tmp/anykernel;
 fi;
 
-umount /system;
-umount /data;
+busybox umount /system;
+busybox umount /data;
 ui_print " ";
 ui_print "Done!";

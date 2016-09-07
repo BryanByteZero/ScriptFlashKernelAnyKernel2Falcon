@@ -85,7 +85,6 @@ write_boot() {
         kernel=`ls *-zImage-dtb`;
         kernel=$split_img/$kernel;
   fi;
-  #Okay
   cd $ramdisk;
   find . | cpio -H newc -o | gzip > /tmp/anykernel/ramdisk-new.cpio.gz;
   if [ $? != 0 ]; then
