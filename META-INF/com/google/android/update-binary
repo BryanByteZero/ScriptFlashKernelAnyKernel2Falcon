@@ -1,6 +1,10 @@
 #!/sbin/sh
 # AnyKernel2 Backend
 # osm0sis @ xda-developers
+# * ZER0 Byte Kernel install script
+# * By BryanByteZ at XDA-Devs
+# * Based on AnyKernel2 by osm0sis
+
 
 OUTFD=/proc/self/fd/$2;
 ZIP="$3";
@@ -58,6 +62,26 @@ if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.devicecheck)" == 1 ]; then
   fi;
 fi;
 
+# disable powerHal and mpdecision if enabled
+# thanks to alberto & fabio for finding out the true location of powerhal
+# adapt the idea of blechdose and modified by hurtsky for anykernel script usage
+
+if [ -e /system/vendor/lib/hw/power.msm8226.so ]; then
+	[ -e /system/vendor/lib/hw/power.msm8226.so.bak ] || cp /system/vendor/lib/hw/power.msm8226.so /system/vendor/lib/hw/power.msm8226.so.bak;
+	[ -e /system/vendor/lib/hw/power.msm8226.so ] && rm -f /system/vendor/lib/hw/power.msm8226.so;
+fi;
+
+# add another location (CM latest powerhal)
+if [ -e /system/lib/hw/power.msm8226.so ]; then
+	[ -e /system/lib/hw/power.msm8226.so.bak ] || cp /system/lib/hw/power.msm8226.so /system/lib/hw/power.msm8226.so.bak;
+	[ -e /system/lib/hw/power.msm8226.so ] && rm -f /system/lib/hw/power.msm8226.so;
+fi;
+
+if [ -e /system/bin/mpdecision ]; then
+	[ -e /system/bin/mpdecisionbak ] || cp /system/bin/mpdecision /system/bin/mpdecisionbak;
+	[ -e /system/bin/mpdecision ] && rm -f /system/bin/mpdecision;
+fi;
+
 if [ "$(file_getprop /tmp/anykernel/anykernel.sh do.initd)" == 1 ]; then
   ui_print "Creating init.d...";
   ui_print " ";
@@ -96,4 +120,3 @@ umount /system;
 umount /data;
 ui_print " ";
 ui_print "Done!";
-
